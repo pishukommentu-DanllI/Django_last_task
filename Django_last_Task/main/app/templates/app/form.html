@@ -9,14 +9,7 @@
   <form method="post">
     {% csrf_token %}
 
-    {{form.title.label}} {{form.title}}<br>
-    {{form.img_href.label}} {{form.img_href}}<br>
-    {{form.content.label}} {{form.content}}<br>
-    {{form.CheckBox.label}} {{form.CheckBox}}<br>
-    {{form.category.label}} {{form.category}}<br>
-    {{form.Info.label}}{{form.Info}}<br>
-    {{form.publishing_house.label}}{{form.publishing_house}}<br>
-
+    {{form.as_p}}
     <button type="submit">Добавить</button>
   </form>
 </body>

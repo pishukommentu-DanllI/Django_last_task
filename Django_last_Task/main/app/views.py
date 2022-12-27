@@ -1,7 +1,7 @@
 from django.http import HttpResponseRedirect, HttpResponseNotFound
 from django.shortcuts import render
 from django.views import View
-from django.views.generic import ListView, DeleteView, CreateView
+from django.views.generic import ListView, DeleteView, CreateView, UpdateView
 
 from .forms import *
 from .models import Text
@@ -14,6 +14,60 @@ class Index(ListView):
     template_name = 'app/index.html'
     context_object_name = 'pages'
 
+
+class Edit(UpdateView):
+    model = Text
+    template_name_suffix = 'edit'
+    success_url = reverse_lazy('home')
+    form_class = One
+
+    def get_context_data(self, form=form_class, **kwargs):
+        intilizer()
+        text = self.object
+        form = form(initial={'title': text.title,
+                              'category': text.category_id,
+                              'Info': text.Info_id,
+                              'img_href': text.img_href,
+                              'CheckBox':  text.CheckBox,
+                              'publishing_house': text.publishing_house.all(),
+                               'content': text.content
+                              })
+        return {'form': form}
+
+
+class Form(CreateView):
+    form_class = One
+    template_name = 'app/form.html'
+    success_url = reverse_lazy('home')
+    model = Text
+
+    def get_context_data(self, form=form_class, **kwargs):
+
+        return {'form': form}
+
+    def form_valid(self, form):
+
+        Publishing = Publishing_house.objects.filter(id__in=form.cleaned_data['publishing_house'])
+        text = Text(category_id=form.cleaned_data['category'],
+                    Info_id=Author.objects.create(info=form.cleaned_data['Info']).id,
+                    title=form.cleaned_data['title'],
+                    img_href=form.cleaned_data['img_href'],
+                    CheckBox=form.cleaned_data['CheckBox'],
+                    content=form.cleaned_data['content']
+        )
+        text.save()
+        print(text.id)
+        text.publishing_house.set(Publishing, through_defaults={})
+
+        form.instance = text
+        return super(Form, self).form_valid(form)
+
+
+class Delete(DeleteView):
+    model = Text
+    template_name = 'app/Delete.html'
+    success_url = reverse_lazy('home')
+
 # class Index(View):
 #     def get(self, request, *agrs, **kwagrs):
 #         return render(request, 'app/index.html', {'pages': Text.objects.all()})
@@ -23,31 +77,7 @@ class Index(ListView):
 #     return render(request, 'app/index.html', {'pages': Text.objects.all()})
 
 
-class Form(CreateView):
-    form_class = One
-    template_name = 'app/form.html'
-    success_url = reverse_lazy('home')
 
-    def get_context_data(self, form=form_class, **kwargs):
-        print('вызов', intilizer())
-
-        return {'form': form}
-
-    def form_valid(self, form):
-
-        Publishing = Publishing_house.objects.filter(id__in=form.cleaned_data['publishing_house'])
-        text = Text(category_id=form.cleaned_data['category'],
-                    Info_id=Author.objects.create(info=form.cleaned_data['Info']).id,
-                    title= form.cleaned_data['title'],
-                    img_href= form.cleaned_data['img_href'],
-                    CheckBox= form.cleaned_data['CheckBox'],
-        )
-        text.save()
-        print(text.id)
-        text.publishing_house.set(Publishing, through_defaults={})
-
-        form.instance = text
-        return super(Form, self).form_valid(form)
 
 
 
@@ -147,46 +177,52 @@ class Form(CreateView):
 #         text.save()
 #         self.get(request)
 
-class Edit(View):
 
-    def get(self, request, id, *agrs, **kwagrs):
-        try:
-            text = Text.objects.get(id=id)
-        except:
-            return HttpResponseNotFound('<h2>Person not found</h2>')
-        text = Text.objects.get(id=id)
-        print(text.publishing_house)
-        form = One(initial={'title': text.title,
-                              'category': text.category_id,
-                              'Info': text.Info_id,
-                              'img_href': text.img_href,
-                              'CheckBox':  text.CheckBox,
-                              'publishing_house': text.publishing_house.all(),
-                               'content': text.content
-                              })
-        return render(request, 'app/edit.html', {'form': form})
 
-    def post(self, request, id, *agrs, **kwagrs):
-        try:
-            text = Text.objects.get(id=id)
-        except:
-            return HttpResponseNotFound('<h2>Person not found</h2>')
-        form = One(request.POST)
-        if form.is_valid():
 
-            Publishing = Publishing_house.objects.filter(id__in=form.cleaned_data['publishing_house'])
-            text.category_id = form.cleaned_data['category']
-            text.Info_id = Author.objects.create(info=form.cleaned_data['Info']).id
-            text.title = form.cleaned_data['title']
-            text.img_href = form.cleaned_data['img_href']
-            text.CheckBox = form.cleaned_data['CheckBox']
-            text.content = form.cleaned_data['content']
-            text.publishing_house.set(Publishing, through_defaults={})
 
-            text.save()
-            return HttpResponseRedirect(reverse('home'))
-        else:
-            self.get(request)
+
+
+# class Edit(View):
+#
+#     def get(self, request, id, *agrs, **kwagrs):
+#         try:
+#             text = Text.objects.get(id=id)
+#         except:
+#             return HttpResponseNotFound('<h2>Person not found</h2>')
+#         text = Text.objects.get(id=id)
+#         print(text.publishing_house)
+#         form = One(initial={'title': text.title,
+#                               'category': text.category_id,
+#                               'Info': text.Info_id,
+#                               'img_href': text.img_href,
+#                               'CheckBox':  text.CheckBox,
+#                               'publishing_house': text.publishing_house.all(),
+#                                'content': text.content
+#                               })
+#         return render(request, 'app/edit.html', {'form': form})
+#
+#     def post(self, request, id, *agrs, **kwagrs):
+#         try:
+#             text = Text.objects.get(id=id)
+#         except:
+#             return HttpResponseNotFound('<h2>Person not found</h2>')
+#         form = One(request.POST)
+#         if form.is_valid():
+#
+#             Publishing = Publishing_house.objects.filter(id__in=form.cleaned_data['publishing_house'])
+#             text.category_id = form.cleaned_data['category']
+#             text.Info_id = Author.objects.create(info=form.cleaned_data['Info']).id
+#             text.title = form.cleaned_data['title']
+#             text.img_href = form.cleaned_data['img_href']
+#             text.CheckBox = form.cleaned_data['CheckBox']
+#             text.content = form.cleaned_data['content']
+#             text.publishing_house.set(Publishing, through_defaults={})
+#
+#             text.save()
+#             return HttpResponseRedirect(reverse('home'))
+#         else:
+#             self.get(request)
 
 
 # def edit(request, id):
@@ -217,10 +253,7 @@ class Edit(View):
 #
 #     return render(request, 'app/edit.html', {'form': form})
 
-class Delete(DeleteView):
-    model = Text
-    template_name = 'app/Delete.html'
-    success_url = reverse_lazy('home')
+
 
 # class Delete(View):
 #     def get(self, request, id, *agrs, **kwagrs):
